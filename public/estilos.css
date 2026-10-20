@@ -99,9 +99,4 @@ body { margin: 0; font-family: system-ui, Arial, sans-serif; background: var(--f
 .carrito-lista li { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 10px 0; border-bottom: 1px solid var(--borde); font-size: 14px; }
 .carrito-lista .cantidad button { border: 1px solid var(--borde); background: #fff; border-radius: 4px; width: 26px; cursor: pointer; }
 .carrito-pie { padding: 14px 18px; border-top: 1px solid var(--borde); }
-.carrito-pie p { margin: 0 0 10px; }git init
-git add .
-git commit -m "Proyecto e-commerce completado"
-git branch -M main
-git remote add origin https://github.com/TU_USUARIO/TU_REPOSITORIO.git
-git push -u origin main
+.carrito-pie p { margin: 0 0 10px; }
