@@ -1,0 +1,107 @@
+/* =========================================================
+   ESTILOS DE LA TIENDA DE FERRETERÍA
+   ========================================================= */
+
+:root {
+  --principal: #14304F;   /* Barra superior y títulos */
+  --acento:    #127C7C;   /* Botones principales y precios */
+  --destacado: #C97E12;   /* Contador del carrito */
+  --fondo:     #F6F8FB;
+  --tarjeta:   #FFFFFF;
+  --texto:     #1E293B;
+  --suave:     #64748B;
+  --borde:     #E2E8F0;
+  --error:     #B23A48;
+  --ok:        #2E7D32;
+}
+
+* { box-sizing: border-box; }
+body { margin: 0; font-family: system-ui, Arial, sans-serif; background: var(--fondo); color: var(--texto); }
+.oculto { display: none !important; }
+
+/* Barra superior */
+.barra { background: var(--principal); color: #fff; padding: 14px 24px; display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+.marca { margin: 0; font-size: 22px; }
+.sesion { display: flex; align-items: center; gap: 10px; }
+#saludo { font-size: 14px; color: #CBD8E6; }
+
+/* Botones */
+.btn { border: none; border-radius: 6px; padding: 8px 14px; font-size: 14px; cursor: pointer; transition: all 0.2s; }
+.btn-principal { background: var(--acento); color: #fff; width: 100%; padding: 10px; }
+.btn-principal:hover { opacity: 0.9; }
+.btn-claro { background: rgba(255,255,255,.12); color: #fff; }
+.btn-carrito { background: #fff; color: var(--principal); font-weight: bold; }
+.contador { background: var(--destacado); color: #fff; border-radius: 10px; padding: 1px 7px; font-size: 12px; margin-left: 4px; }
+.btn-cerrar { background: none; border: none; font-size: 24px; cursor: pointer; color: var(--suave); }
+
+/* Mensajes */
+.mensaje { max-width: 1100px; margin: 14px auto 0; padding: 10px 14px; border-radius: 6px; font-size: 14px; }
+.mensaje.ok { background: #E8F5EA; color: var(--ok); }
+.mensaje.error { background: #FCEBEB; color: var(--error); }
+
+/* Vista Bienvenida / Login */
+.bienvenida { display: flex; justify-content: center; align-items: center; min-height: 75vh; padding: 20px; }
+.caja-login { background: var(--tarjeta); border: 1px solid var(--borde); border-radius: 12px; padding: 28px; width: 380px; max-width: 100%; box-shadow: 0 8px 20px rgba(0,0,0,0.08); text-align: center; }
+.caja-login h2 { margin-top: 0; color: var(--principal); }
+.caja-login input { width: 100%; padding: 10px; margin-bottom: 12px; border: 1px solid var(--borde); border-radius: 6px; }
+.cambiar { font-size: 13px; color: var(--suave); margin-top: 12px; }
+
+/* Catálogo */
+.contenido { max-width: 1100px; margin: 0 auto; padding: 20px 16px 60px; }
+.categorias { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 18px; }
+.categorias button { border: 1px solid var(--borde); background: var(--tarjeta); border-radius: 20px; padding: 6px 14px; cursor: pointer; font-size: 14px; }
+.categorias button.activa { background: var(--principal); color: #fff; border-color: var(--principal); }
+
+.grilla { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 18px; }
+.vacio { color: var(--suave); }
+
+/* Tarjetas de productos */
+.tarjeta { background: var(--tarjeta); border: 1px solid var(--borde); border-radius: 10px; overflow: hidden; display: flex; flex-direction: column; transition: transform 0.2s; }
+.tarjeta:hover { transform: translateY(-3px); }
+.tarjeta img { width: 100%; height: 170px; object-fit: cover; background: var(--borde); }
+.tarjeta .info { padding: 12px 14px 14px; display: flex; flex-direction: column; gap: 6px; flex: 1; }
+.tarjeta h3 { margin: 0; font-size: 16px; }
+.tarjeta .categoria { font-size: 12px; color: var(--suave); text-transform: uppercase; letter-spacing: .5px; }
+.tarjeta .descripcion { font-size: 13px; color: var(--suave); margin: 0; flex: 1; }
+.tarjeta .precio { font-size: 18px; font-weight: bold; color: var(--acento); }
+.tarjeta .stock { font-size: 12px; color: var(--suave); }
+
+/* Destacadas / Últimas Unidades */
+.tarjeta.destacada { border: 2px solid var(--destacado); background: #FFFBEB; }
+
+/* 🔴 PRODUCTOS SIN STOCK (Gris translúcido / no sólido) */
+.tarjeta.sin-stock {
+  opacity: 0.55; /* Transparencia no sólida */
+  filter: grayscale(85%); /* Efecto grisáceo */
+  background: #F1F5F9;
+  border-color: #CBD5E1;
+}
+.tarjeta.sin-stock:hover {
+  transform: none; /* Desactiva animación hover para los sin stock */
+}
+.tarjeta.sin-stock img {
+  opacity: 0.7;
+}
+.texto-sin-stock {
+  color: var(--error) !important;
+  font-weight: bold;
+}
+
+.tarjeta button:disabled { background: var(--borde); color: var(--suave); cursor: not-allowed; }
+
+.separador { border: 0; height: 1px; background: var(--borde); margin: 30px 0; }
+
+/* Carrito */
+.carrito { position: fixed; top: 0; right: 0; width: 340px; max-width: 100%; height: 100%; background: var(--tarjeta); box-shadow: -4px 0 20px rgba(0,0,0,.15); display: flex; flex-direction: column; z-index: 10; }
+.carrito-cabecera { display: flex; justify-content: space-between; align-items: center; padding: 14px 18px; border-bottom: 1px solid var(--borde); }
+.carrito-cabecera h2 { margin: 0; font-size: 18px; color: var(--principal); }
+.carrito-lista { list-style: none; margin: 0; padding: 0 18px; overflow-y: auto; flex: 1; }
+.carrito-lista li { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 10px 0; border-bottom: 1px solid var(--borde); font-size: 14px; }
+.carrito-lista .cantidad button { border: 1px solid var(--borde); background: #fff; border-radius: 4px; width: 26px; cursor: pointer; }
+.carrito-pie { padding: 14px 18px; border-top: 1px solid var(--borde); }
+.carrito-pie p { margin: 0 0 10px; }git init
+git add .
+git commit -m "Proyecto e-commerce completado"
+git branch -M main
+git remote add origin https://github.com/TU_USUARIO/TU_REPOSITORIO.git
+git push -u origin main
