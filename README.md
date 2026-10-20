@@ -98,6 +98,6 @@ por el código de la práctica.
 - Página de detalle de producto
 
 ---
-Integrantes: _completar_ · Link del deploy: _completar_
+Integrantes: Saul valdez · Link del deploy: https://ferreteria-ecomerce-db.vercel.app/
 
 Prof. Julia Panei · UTN Neuquén · Diseño Backend 2026
