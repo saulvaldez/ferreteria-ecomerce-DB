@@ -1,7 +1,7 @@
 // CONTROLLER DE USUARIOS
 const model = require('../models/authModel');
 
-async function registro(req, res) {
+async function registro(req, res) { // async es como una funcion promesa, basicamente es como un sigue trabajando yo te aviso cuando este lista y no te quedes congelado 
   const { email, password, nombre } = req.body;
   if (!email || !password || !nombre || password.length < 6) {
     return res.status(400).send('Faltan datos o la contraseña es muy corta');
@@ -9,7 +9,7 @@ async function registro(req, res) {
   try {
     const usuario = await model.registrar(email, password, nombre);
     res.status(201).json({ id: usuario.id, email: usuario.email });
-  } catch (error) {
+  } catch (error) {// si las operaciones que se esperaban fallan se muestra este error
     if (error.status === 501) return res.status(501).send(error.message);
     res.status(400).send('No se pudo registrar: ' + error.message);
   }

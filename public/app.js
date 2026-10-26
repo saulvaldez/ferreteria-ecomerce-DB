@@ -1,26 +1,28 @@
 // =========================================================
-// FRONT DE LA TIENDA - FERRETERÍA
+// FRONTEND DE LA TIENDA - CLASE 3
 // =========================================================
 
-// ---------- ESTADO ----------
-const catalogo = {};  
-let carrito = JSON.parse(localStorage.getItem('carrito')) || [];   
-let token = localStorage.getItem('token');                         
-let usuarioEmail = localStorage.getItem('email'); 
+// ---------- ESTADO LOCAL ----------
+const catalogo = {};
+let ultimaLista = []; // Para el buscador por nombre
+let carrito = JSON.parse(localStorage.getItem('carrito')) || [];
+let token = localStorage.getItem('token');
+let usuarioEmail = localStorage.getItem('email');
 let categoriaActual = null;
 
 // =========================================================
-// CATALOGO Y CATEGORÍAS
+// 1. CATEGORÍAS (Clase 3)
 // =========================================================
 
-// Pide las categorías y genera los botones de filtro
+// Carga las categorías desde GET /categorias y dibuja los botones
 async function cargarCategorias() {
   try {
     const res = await fetch('/categorias');
     if (!res.ok) return;
     const categorias = await res.json();
     const nav = document.getElementById('categorias');
-    
+    if (!nav) return;
+
     let html = `<button data-id="" class="${categoriaActual === null ? 'activa' : ''}" onclick="cargarProductos(null)">Todas</button>`;
     categorias.forEach(c => {
       const activa = categoriaActual === c.id ? 'activa' : '';
@@ -39,7 +41,11 @@ function pintarCategoriaActiva() {
   });
 }
 
-// Carga los productos (filtrando por categoría si se pasa un ID)
+// =========================================================
+// 2. PRODUCTOS Y CATÁLOGO (Clase 3)
+// =========================================================
+
+// Carga los productos desde GET /productos
 async function cargarProductos(categoriaId = null) {
   categoriaActual = categoriaId;
   pintarCategoriaActiva();
@@ -51,74 +57,66 @@ async function cargarProductos(categoriaId = null) {
     const datos = await res.json();
 
     if (res.ok) {
+      ultimaLista = datos; // Guardar para el buscador
       pintarProductos(datos);
     } else {
       mostrarMensaje(datos.message || 'Error al cargar productos', 'error');
     }
   } catch (error) {
-    mostrarMensaje('No se pudo conectar con el servidor', 'error');
+    mostrarMensaje('Falta implementar: cargarProductos (Clase 3)', 'error');
   }
 }
 
-// Renderiza productos separando: Últimas unidades, Catálogo con stock y Productos Sin Stock al final
+// Muestra los productos en pantalla
 function pintarProductos(lista) {
-  const grillaGeneral = document.getElementById('productos');
-  const grillaUltimas = document.getElementById('productos-ultimas');
+  const grilla = document.getElementById('productos');
+  if (!grilla) return;
 
-  // Guardar en diccionario para el carrito
+  // Guardar productos en diccionario para usar con el carrito
   lista.forEach(p => { catalogo[p.id] = p; });
   pintarCarrito();
 
   if (lista.length === 0) {
-    grillaGeneral.innerHTML = '<p class="vacio">No hay productos para mostrar en esta categoría.</p>';
-    if (grillaUltimas) grillaUltimas.innerHTML = '';
+    grilla.innerHTML = '<p class="vacio">No hay productos para mostrar.</p>';
     return;
   }
 
-  // 1. Productos con stock bajo (1 a 3 unidades)
-  const ultimasUnidades = lista.filter(p => p.stock > 0 && p.stock <= 3);
-  if (grillaUltimas) {
-    if (ultimasUnidades.length === 0) {
-      grillaUltimas.innerHTML = '<p class="vacio">No hay ofertas de últimas unidades en esta categoría.</p>';
-    } else {
-      grillaUltimas.innerHTML = ultimasUnidades.map(p => crearTarjetaHTML(p, true)).join('');
-    }
-  }
-
-  // 2. Ordenar el catálogo general: con stock primero, SIN STOCK (stock == 0) AL FINAL
+  // Ordenar: Productos con stock primero, SIN STOCK al final
   const conStock = lista.filter(p => p.stock > 0);
   const sinStock = lista.filter(p => p.stock < 1);
   const listaOrdenada = [...conStock, ...sinStock];
 
-  // Renderizar catálogo
-  grillaGeneral.innerHTML = listaOrdenada.map(p => crearTarjetaHTML(p, false)).join('');
+  grilla.innerHTML = listaOrdenada.map(p => {
+    const agotado = p.stock < 1;
+    return `
+      <article class="tarjeta ${agotado ? 'sin-stock' : ''}">
+        <img src="${p.imagen_url || ''}" alt="${p.nombre}">
+        <div class="info">
+          <span class="categoria">${p.categorias ? p.categorias.nombre : 'Ferretería'}</span>
+          <h3>${p.nombre}</h3>
+          <p class="descripcion">${p.descripcion || ''}</p>
+          <span class="precio">$${p.precio}</span>
+          <span class="stock ${agotado ? 'texto-sin-stock' : ''}">
+            ${agotado ? 'Sin stock' : 'Stock: ' + p.stock}
+          </span>
+          <button class="btn btn-principal" onclick="agregar(${p.id})" ${agotado ? 'disabled' : ''}>
+            ${agotado ? 'Agotado' : 'Agregar al carrito'}
+          </button>
+        </div>
+      </article>
+    `;
+  }).join('');
 }
 
-// Función auxiliar para renderizar cada tarjeta HTML
-function crearTarjetaHTML(p, esDestacado) {
-  const sinStock = p.stock < 1;
-  const claseSinStock = sinStock ? 'sin-stock' : '';
-  const claseDestacada = esDestacado ? 'destacada' : '';
-
-  return `
-    <article class="tarjeta ${claseDestacada} ${claseSinStock}">
-      <img src="${p.imagen_url || ''}" alt="${p.nombre}">
-      <div class="info">
-        <span class="categoria">${p.categorias ? p.categorias.nombre : 'Ferretería'}</span>
-        <h3>${p.nombre}</h3>
-        <p class="descripcion">${p.descripcion || ''}</p>
-        <span class="precio">$${p.precio}</span>
-        <span class="stock ${sinStock ? 'texto-sin-stock' : ''}">${sinStock ? 'Agotado / Sin stock' : 'Quedan ' + p.stock + ' unidades'}</span>
-        <button class="btn btn-principal" onclick="agregar(${p.id})" ${sinStock ? 'disabled' : ''}>
-          ${sinStock ? 'Agotado' : 'Agregar al carrito'}
-        </button>
-      </div>
-    </article>
-  `;
+// Buscador por nombre (Clase 3)
+function buscar(texto) {
+  const t = texto.toLowerCase();
+  const filtrados = ultimaLista.filter(p => p.nombre.toLowerCase().includes(t));
+  pintarProductos(filtrados);
 }
 
 // =========================================================
-// CARRITO DE COMPRAS
+// 3. CARRITO DE COMPRAS (Local)
 // =========================================================
 
 function guardarCarrito() {
@@ -150,6 +148,7 @@ function pintarCarrito() {
   const lista = document.getElementById('carrito-lista');
   let total = 0;
   let unidades = 0;
+  if (!lista) return;
   lista.innerHTML = '';
 
   carrito.forEach(item => {
@@ -170,70 +169,34 @@ function pintarCarrito() {
   });
 
   if (carrito.length === 0) lista.innerHTML = '<li>Tu carrito está vacío</li>';
-  document.getElementById('carrito-total').textContent = '$' + total;
-  document.getElementById('contador').textContent = unidades;
+  if (document.getElementById('carrito-total')) document.getElementById('carrito-total').textContent = '$' + total;
+  if (document.getElementById('contador')) document.getElementById('contador').textContent = unidades;
 }
 
 function alternarCarrito() {
-  document.getElementById('carrito').classList.toggle('oculto');
+  const c = document.getElementById('carrito');
+  if (c) c.classList.toggle('oculto');
 }
 
 // =========================================================
-// USUARIOS: REGISTRO, LOGIN Y SESIÓN
+// 4. USUARIOS Y COMPRA (Plantilla de la Clase 3)
 // =========================================================
 
-async function registrar(evento) {
-  evento.preventDefault();
-  const nombre = document.getElementById('reg-nombre').value;
-  const email = document.getElementById('reg-email').value;
-  const password = document.getElementById('reg-password').value;
-
-  try {
-    const res = await fetch('/registro', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ nombre, email, password })
-    });
-
-    if (res.ok) {
-      mostrarMensaje('Cuenta creada con éxito. Ahora inicia sesión.', 'ok');
-      mostrarRegistro(false);
-    } else {
-      const txt = await res.text();
-      mostrarMensaje(txt, 'error');
-    }
-  } catch (error) {
-    mostrarMensaje('Error de conexión al registrar usuario', 'error');
-  }
+function abrirModal() {
+  const m = document.getElementById('modal');
+  if (m) m.classList.remove('oculto');
 }
 
-async function iniciarSesion(evento) {
-  evento.preventDefault();
-  const email = document.getElementById('login-email').value;
-  const password = document.getElementById('login-password').value;
+function cerrarModal() {
+  const m = document.getElementById('modal');
+  if (m) m.classList.add('oculto');
+}
 
-  try {
-    const res = await fetch('/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password })
-    });
-
-    const datos = await res.json();
-
-    if (res.ok) {
-      token = datos.token;
-      usuarioEmail = email;
-      localStorage.setItem('token', token);
-      localStorage.setItem('email', usuarioEmail);
-      actualizarSesion();
-      mostrarMensaje('¡Bienvenido/a!', 'ok');
-    } else {
-      mostrarMensaje('Email o contraseña incorrectos', 'error');
-    }
-  } catch (error) {
-    mostrarMensaje('Error de conexión al iniciar sesión', 'error');
-  }
+function mostrarRegistro(mostrar) {
+  const fReg = document.getElementById('form-registro');
+  const fLog = document.getElementById('form-login');
+  if (fReg) fReg.classList.toggle('oculto', !mostrar);
+  if (fLog) fLog.classList.toggle('oculto', mostrar);
 }
 
 function cerrarSesion() {
@@ -247,69 +210,92 @@ function cerrarSesion() {
 
 function actualizarSesion() {
   const logueado = Boolean(token);
-  document.getElementById('saludo').textContent = logueado ? usuarioEmail : '';
-  document.getElementById('btn-salir').classList.toggle('oculto', !logueado);
-
-  document.getElementById('vista-login').classList.toggle('oculto', logueado);
-  document.getElementById('vista-tienda').classList.toggle('oculto', !logueado);
-
-  if (logueado) {
-    cargarCategorias();
-    cargarProductos();
-  }
+  const saludo = document.getElementById('saludo');
+  const btnSalir = document.getElementById('btn-salir');
+  if (saludo) saludo.textContent = logueado ? usuarioEmail : '';
+  if (btnSalir) btnSalir.classList.toggle('oculto', !logueado);
 }
 
-// =========================================================
-// COMPRA
-// =========================================================
+// TODO (Clase 3): completar estas funciones según la plantilla
+async function registrar(evento) {
+  const nombre = document.getElementById('reg-nombre').value;
+const email = document.getElementById('reg-email').value;
+const password = document.getElementById('reg-password').value;
+const res = await fetch('/registro', {
+ method: 'POST',
+ headers: { 'Content-Type': 'application/json' },
+ body: JSON.stringify({ nombre, email, password })
+});
+if (res.status === 201) {
+ mostrarMensaje('Cuenta creada. Ahora ingresá con tu email y contraseña.', 'ok');
+ mostrarRegistro(false); // pasa al login
+ document.getElementById('login-email').value = email;
+} else {
+ mostrarMensaje(await res.text(), 'error');
+}
+}
+
+async function iniciarSesion(evento) {
+  evento.preventDefault();
+  const email = document.getElementById('login-email').value;
+const password = document.getElementById('login-password').value;
+const res = await fetch('/login', {
+ method: 'POST',
+ headers: { 'Content-Type': 'application/json' },
+ body: JSON.stringify({ email, password })
+});
+if (!res.ok) return mostrarMensaje(await res.text(), 'error');
+const datos = await res.json(); // { token: "eyJhb..." }
+token = datos.token;
+usuarioEmail = email;
+localStorage.setItem('token', token);
+localStorage.setItem('email', email);
+cerrarModal();
+actualizarSesion(); // muestra el email y el botón Salir
+mostrarMensaje('¡Hola! Ya podés comprar.', 'ok');
+}
 
 async function comprar() {
-  if (carrito.length === 0) return mostrarMensaje('Tu carrito está vacío', 'error');
-  if (!token) {
-    return mostrarMensaje('Debes iniciar sesión para comprar', 'error');
-  }
-
-  try {
-    const res = await fetch('/pedidos', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
-      body: JSON.stringify({ items: carrito })
-    });
-
-    if (res.ok) {
-      carrito = [];
-      guardarCarrito();
-      cargarProductos(categoriaActual);
-      mostrarMensaje('¡Compra realizada con éxito!', 'ok');
-    } else {
-      const txt = await res.text();
-      mostrarMensaje(txt, 'error');
-    }
-  } catch (error) {
-    mostrarMensaje('Error de conexión al realizar la compra', 'error');
-  }
+  if (!token) { // sin sesión: primero ingresar
+ abrirModal();
+ return mostrarMensaje('Ingresá para poder comprar', 'error');
 }
-
-// =========================================================
-// AYUDANTES
-// =========================================================
+const res = await fetch('/pedidos', {
+ method: 'POST',
+ headers: {
+ 'Content-Type': 'application/json',
+ 'Authorization': 'Bearer ' + token // con un espacio después de Bearer
+ },
+ body: JSON.stringify({ items: carrito })
+});
+if (res.status === 201) {
+ const pedido = await res.json();
+ carrito = [];
+ guardarCarrito();
+ alternarCarrito();
+ mostrarMensaje('¡Compra realizada! Pedido #' + pedido.id +
+ ' por $' + pedido.total, 'ok');
+ cargarProductos(categoriaActual); // para ver el stock nuevo
+} else if (res.status === 401) {
+ cerrarSesion();
+ abrirModal();
+ mostrarMensaje('Tu sesión venció. Ingresá de nuevo.', 'error');
+} else {
+ mostrarMensaje(await res.text(), 'error');
+}
+}
 
 function mostrarMensaje(texto, tipo) {
   const caja = document.getElementById('mensaje');
+  if (!caja) return;
   caja.textContent = texto;
   caja.className = 'mensaje ' + tipo;
   clearTimeout(caja.temporizador);
   caja.temporizador = setTimeout(() => caja.classList.add('oculto'), 4000);
 }
 
-function mostrarRegistro(mostrar) {
-  document.getElementById('form-registro').classList.toggle('oculto', !mostrar);
-  document.getElementById('form-login').classList.toggle('oculto', mostrar);
-}
-
 // ---------- AL ABRIR LA PÁGINA ----------
+cargarCategorias();
+cargarProductos();
 pintarCarrito();
 actualizarSesion();

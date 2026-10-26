@@ -14,6 +14,7 @@
     <div class="sesion">
       <span id="saludo"></span>
       <button id="btn-salir" class="btn btn-claro oculto" onclick="cerrarSesion()">Cerrar sesión</button>
+      <button class="btn btn-claro" onclick="abrirModal()">Ingresar</button>
       <button class="btn btn-carrito" onclick="alternarCarrito()">
         🛒 Carrito <span id="contador" class="contador">0</span>
       </button>
@@ -23,51 +24,21 @@
   <!-- 🔔 CAJA DE MENSAJES -->
   <div id="mensaje" class="mensaje oculto"></div>
 
-  <!-- 🔒 VISTA 1: PANTALLA DE INICIO Y BIENVENIDA (NO LOGUEADO) -->
-  <section id="vista-login" class="bienvenida">
-    <div class="caja-login">
-      <h2>Bienvenido a Ferretería Central 🛠️</h2>
-      <p>Inicia sesión o regístrate para explorar nuestro catálogo y comprar online.</p>
-      
-      <!-- Formulario de Iniciar Sesión -->
-      <form id="form-login" onsubmit="iniciarSesion(event)">
-        <h3>Ingresar</h3>
-        <input id="login-email" type="email" placeholder="Email" required>
-        <input id="login-password" type="password" placeholder="Contraseña" required>
-        <button class="btn btn-principal" type="submit">Ingresar</button>
-        <p class="cambiar">¿No tienes cuenta? <a href="#" onclick="mostrarRegistro(true)">Registrate aquí</a></p>
-      </form>
-
-      <!-- Formulario de Registro -->
-      <form id="form-registro" class="oculto" onsubmit="registrar(event)">
-        <h3>Crear cuenta</h3>
-        <input id="reg-nombre" type="text" placeholder="Nombre completo" required>
-        <input id="reg-email" type="email" placeholder="Email" required>
-        <input id="reg-password" type="password" placeholder="Contraseña (mínimo 6)" minlength="6" required>
-        <button class="btn btn-principal" type="submit">Crear cuenta</button>
-        <p class="cambiar">¿Ya tienes cuenta? <a href="#" onclick="mostrarRegistro(false)">Ingresa aquí</a></p>
-      </form>
+  <!-- 🛍️ CONTENIDO PRINCIPAL (CATÁLOGO DIRECTO DE CLASE 3) -->
+  <main class="contenido">
+    <!-- 🔍 Buscador por Nombre -->
+    <div class="buscador">
+      <input type="text" placeholder="Buscar productos por nombre..." oninput="buscar(this.value)">
     </div>
-  </section>
-
-  <!-- 🛍️ VISTA 2: CATÁLOGO Y TIENDA (SOLO USUARIOS LOGUEADOS) -->
-  <section id="vista-tienda" class="contenido oculto">
-    <!-- 🔥 Sección Últimas Unidades -->
-    <section class="bloque-destacado">
-      <h2>🔥 Últimas unidades en stock</h2>
-      <div id="productos-ultimas" class="grilla"></div>
-    </section>
-
-    <hr class="separador">
 
     <!-- 📂 Categorías -->
-    <h2>Explorar por Categoría</h2>
+    <h2>Categorías</h2>
     <nav id="categorias" class="categorias"></nav>
 
-    <!-- 📦 Catálogo General -->
+    <!-- 📦 Catálogo de Productos -->
     <h2>Catálogo de Productos</h2>
     <div id="productos" class="grilla"></div>
-  </section>
+  </main>
 
   <!-- 🛒 PANEL DEL CARRITO -->
   <aside id="carrito" class="carrito oculto">
@@ -81,6 +52,32 @@
       <button class="btn btn-principal" onclick="comprar()">Confirmar Compra</button>
     </div>
   </aside>
+
+  <!-- 🔒 MODAL DE LOGIN / REGISTRO -->
+  <div id="modal" class="modal oculto">
+    <div class="modal-contenido">
+      <button class="btn-cerrar" onclick="cerrarModal()">×</button>
+
+      <!-- Formulario Login -->
+      <form id="form-login" onsubmit="iniciarSesion(event)">
+        <h2>Ingresar</h2>
+        <input id="login-email" type="email" placeholder="Email" required>
+        <input id="login-password" type="password" placeholder="Contraseña" required>
+        <button class="btn btn-principal" type="submit">Ingresar</button>
+        <p class="cambiar">¿No tienes cuenta? <a href="#" onclick="mostrarRegistro(true)">Registrate aquí</a></p>
+      </form>
+
+      <!-- Formulario Registro -->
+      <form id="form-registro" class="oculto" onsubmit="registrar(event)">
+        <h2>Crear cuenta</h2>
+        <input id="reg-nombre" type="text" placeholder="Nombre completo" required>
+        <input id="reg-email" type="email" placeholder="Email" required>
+        <input id="reg-password" type="password" placeholder="Contraseña (mínimo 6)" minlength="6" required>
+        <button class="btn btn-principal" type="submit">Crear cuenta</button>
+        <p class="cambiar">¿Ya tienes cuenta? <a href="#" onclick="mostrarRegistro(false)">Ingresa aquí</a></p>
+      </form>
+    </div>
+  </div>
 
   <script src="app.js"></script>
 </body>
