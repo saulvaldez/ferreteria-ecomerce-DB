@@ -1,5 +1,5 @@
 // =========================================================
-// FRONTEND DE LA TIENDA - CLASE 3
+// FRONTEND DE LA TIENDA - VERSIÓN PRO/CARRUSELES
 // =========================================================
 
 // ---------- ESTADO LOCAL ----------
@@ -14,7 +14,6 @@ let categoriaActual = null;
 // 1. CATEGORÍAS (Clase 3)
 // =========================================================
 
-// Carga las categorías desde GET /categorias y dibuja los botones
 async function cargarCategorias() {
   try {
     const res = await fetch('/categorias');
@@ -29,9 +28,7 @@ async function cargarCategorias() {
       html += `<button data-id="${c.id}" class="${activa}" onclick="cargarProductos(${c.id})">${c.nombre}</button>`;
     });
     nav.innerHTML = html;
-  } catch (error) {
-    console.error('Error al cargar categorías:', error);
-  }
+  } catch (error) { console.error('Error al cargar categorías:', error); }
 }
 
 function pintarCategoriaActiva() {
@@ -42,82 +39,184 @@ function pintarCategoriaActiva() {
 }
 
 // =========================================================
-// 2. PRODUCTOS Y CATÁLOGO (Clase 3)
+// 2. PRODUCTOS Y CATÁLOGO (CARRUSELES - SIN BACKEND)
 // =========================================================
 
-// Carga los productos desde GET /productos
 async function cargarProductos(categoriaId = null) {
   categoriaActual = categoriaId;
   pintarCategoriaActiva();
-
-  const url = categoriaId ? `/productos?categoria=${categoriaId}` : '/productos';
+  // Se cargan todos para poder agruparlos en frontend
+  const url = '/productos'; 
 
   try {
     const res = await fetch(url);
     const datos = await res.json();
 
     if (res.ok) {
-      ultimaLista = datos; // Guardar para el buscador
-      pintarProductos(datos);
+      ultimaLista = datos; 
+      // Filtrar por categoría actual si hay una seleccionada
+      const listaFinal = categoriaId 
+        ? datos.filter(p => p.categoria_id === categoriaId)
+        : datos;
+      pintarProductos(listaFinal, Boolean(categoriaId));
     } else {
       mostrarMensaje(datos.message || 'Error al cargar productos', 'error');
     }
-  } catch (error) {
-    mostrarMensaje('Falta implementar: cargarProductos (Clase 3)', 'error');
-  }
+  } catch (error) { mostrarMensaje('Error de conexión', 'error'); }
 }
 
-// Muestra los productos en pantalla
-function pintarProductos(lista) {
-  const grilla = document.getElementById('productos');
-  if (!grilla) return;
-
-  // Guardar productos en diccionario para usar con el carrito
-  lista.forEach(p => { catalogo[p.id] = p; });
-  pintarCarrito();
+// Muestra los productos en carruseles agrupados por categoría (Tu Bosquejo)
+function pintarProductos(lista, esFiltrado = false) {
+  const container = document.getElementById('productos-catalogo');
+  if (!container) return;
+  container.innerHTML = '';
 
   if (lista.length === 0) {
-    grilla.innerHTML = '<p class="vacio">No hay productos para mostrar.</p>';
+    container.innerHTML = '<p class="vacio">No hay productos en esta selección.</p>';
     return;
   }
 
-  // Ordenar: Productos con stock primero, SIN STOCK al final
-  const conStock = lista.filter(p => p.stock > 0);
-  const sinStock = lista.filter(p => p.stock < 1);
-  const listaOrdenada = [...conStock, ...sinStock];
+  // 1. Guardar en diccionario para carrito
+  lista.forEach(p => catalogo[p.id] = p);
+  pintarCarrito();
 
-  grilla.innerHTML = listaOrdenada.map(p => {
-    const agotado = p.stock < 1;
-    return `
-      <article class="tarjeta ${agotado ? 'sin-stock' : ''}">
-        <img src="${p.imagen_url || ''}" alt="${p.nombre}">
-        <div class="info">
-          <span class="categoria">${p.categorias ? p.categorias.nombre : 'Ferretería'}</span>
-          <h3>${p.nombre}</h3>
-          <p class="descripcion">${p.descripcion || ''}</p>
-          <span class="precio">$${p.precio}</span>
-          <span class="stock ${agotado ? 'texto-sin-stock' : ''}">
-            ${agotado ? 'Sin stock' : 'Stock: ' + p.stock}
-          </span>
-          <button class="btn btn-principal" onclick="agregar(${p.id})" ${agotado ? 'disabled' : ''}>
-            ${agotado ? 'Agotado' : 'Agregar al carrito'}
-          </button>
-        </div>
-      </article>
+  // 2. Ordenar lista plana (con stock primero)
+  const ordenar = (a, b) => b.stock - a.stock;
+
+  // Si estamos en búsqueda o filtrado de categorías (Clase 3), 
+  // mostramos una grilla normal, no carruseles
+  if (esFiltrado || (document.getElementById('input-buscar') && document.getElementById('input-buscar').value.length > 0)) {
+    const ordenada = lista.sort(ordenar);
+    container.innerHTML = `
+      <h2 class="categoria-titulo-bosquejo">Resultados</h2>
+      <div class="grilla" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 20px;">
+        ${ordenada.map(p => generarTarjetaHTML(p)).join('')}
+      </div>
     `;
-  }).join('');
+    return;
+  }
+
+  // 3. AGRUPAR POR CATEGORÍA (Tus filas del bosquejo)
+  const productosAgrupados = {};
+  lista.forEach(p => {
+    // Si el backend no envía el nombre, usamos 'General'
+    const catNombre = p.categorias && p.categorias.nombre 
+      ? p.categorias.nombre.toLowerCase() 
+      : 'General';
+    if (!productosAgrupados[catNombre]) productosAgrupados[catNombre] = [];
+    productosAgrupados[catNombre].push(p);
+  });
+
+  // 4. GENERAR HTML DE CARRUSELES
+  let htmlTotal = '';
+  // Convertimos objeto en array y ordenamos categorías por nombre
+  Object.keys(productosAgrupados).sort().forEach(catNombre => {
+    const productosCat = productosAgrupados[catNombre];
+    const ordenadaCat = productosCat.sort(ordenar);
+    const catIdPrefix = 'cat-' + catNombre.replace(/\s+/g, '-'); // ID único para flechas
+
+    htmlTotal += `
+      <section class="seccion-categoria" id="${catIdPrefix}">
+        <h2 class="categoria-titulo-bosquejo">${catNombre}</h2>
+        
+        <!-- Flechas de navegación (tus circulitos) -->
+        <button class="carrusel-btn carrusel-btn-izq" onclick="moverCarrusel('${catIdPrefix}', -1)" title="Anterior">
+            <i class="fas fa-chevron-left"></i>
+        </button>
+        <button class="carrusel-btn carrusel-btn-der" onclick="moverCarrusel('${catIdPrefix}', 1)" title="Siguiente">
+            <i class="fas fa-chevron-right"></i>
+        </button>
+
+        <!-- El contenedor del carrusel -->
+        <div class="carrusel-pista-contenedor">
+          <div class="carrusel-pista">
+            ${ordenadaCat.map(p => generarTarjetaHTML(p)).join('')}
+          </div>
+        </div>
+      </section>
+    `;
+  });
+
+  container.innerHTML = htmlTotal;
+  // Actualizar estado de las flechas (desactivar si no hay más que deslizar)
+  setTimeout(() => {
+    Object.keys(productosAgrupados).forEach(catNombre => {
+        actualizarFlechas('cat-' + catNombre.replace(/\s+/g, '-'));
+    });
+  }, 100);
 }
 
-// Buscador por nombre (Clase 3)
+// Función auxiliar para generar el HTML de una tarjeta
+function generarTarjetaHTML(p) {
+  const agotado = p.stock < 1;
+  const precioFormatted = Number(p.precio).toLocaleString('es-CL'); // Formato precio local
+  return `
+    <article class="tarjeta ${agotado ? 'sin-stock' : ''}">
+      <img src="${p.imagen_url || ''}" alt="${p.nombre}" loading="lazy">
+      <div class="info">
+        <h3>${p.nombre}</h3>
+        <p class="descripcion">${p.descripcion || ''}</p>
+        <span class="stock ${agotado ? 'texto-sin-stock' : ''}">
+            ${agotado ? '<i class="fas fa-times-circle"></i> Sin stock' : '<i class="fas fa-box"></i> Stock: ' + p.stock}
+        </span>
+        <span class="precio">$${precioFormatted}</span>
+        <button class="btn btn-principal compra" onclick="agregar(${p.id})" ${agotado ? 'disabled' : ''}>
+          ${agotado ? 'Agotado' : 'Añadir <i class="fas fa-cart-plus"></i>'}
+        </button>
+      </div>
+    </article>
+  `;
+}
+
+// =========================================================
+// 2. LÓGICA DE MOVIMIENTO DEL CARRUSEL (No backend)
+// =========================================================
+
+// Mueve el carrusel de forma suave (Tus flechas circulitos)
+function moverCarrusel(seccionId, direccion) {
+  const seccion = document.getElementById(seccionId);
+  const pistaContenedor = seccion.querySelector('.carrusel-pista-contenedor');
+  const anchoTarjeta = 260;
+  const gap = 20;
+  const desplazamiento = anchoTarjeta + gap; // Desplazar una tarjeta a la vez
+
+  pistaContenedor.scrollLeft += (desplazamiento * direccion);
+  
+  // Pequeño retardo para dar tiempo al scroll suave
+  setTimeout(() => actualizarFlechas(seccionId), 400); 
+}
+
+// Actualiza el estado (desactivado) de las flechas si se llega al inicio/fin
+function actualizarFlechas(seccionId) {
+    const seccion = document.getElementById(seccionId);
+    const pistaContenedor = seccion.querySelector('.carrusel-pista-contenedor');
+    const btnIzq = seccion.querySelector('.carrusel-btn-izq');
+    const btnDer = seccion.querySelector('.carrusel-btn-der');
+
+    if (!pistaContenedor) return;
+
+    // Desactivar izq si está en el inicio
+    btnIzq.disabled = (pistaContenedor.scrollLeft <= 5);
+
+    // Desactivar der si está en el final
+    // (Total ancho pista - ancho contenedor <= scroll actual)
+    btnDer.disabled = (pistaContenedor.scrollWidth - pistaContenedor.clientWidth <= pistaContenedor.scrollLeft + 5);
+}
+
+// =========================================================
+// 3. RESTO DE FUNCIONES (Actualizadas estéticamente)
+// =========================================================
+
 function buscar(texto) {
-  const t = texto.toLowerCase();
-  const filtrados = ultimaLista.filter(p => p.nombre.toLowerCase().includes(t));
-  pintarProductos(filtrados);
+  const t = texto.trim().toLowerCase();
+  // Mostramos grilla si hay búsqueda, carruseles si está vacío
+  const filtrados = t.length > 0 
+    ? ultimaLista.filter(p => p.nombre.toLowerCase().includes(t))
+    : ultimaLista;
+  
+  // categoriaActual null y buscador vacío: modo carrusel total
+  pintarProductos(filtrados, Boolean(categoriaActual)); 
 }
-
-// =========================================================
-// 3. CARRITO DE COMPRAS (Local)
-// =========================================================
 
 function guardarCarrito() {
   localStorage.setItem('carrito', JSON.stringify(carrito));
@@ -131,9 +230,9 @@ function agregar(id) {
   const item = carrito.find(i => i.producto_id === id);
   if (item) item.cantidad++;
   else carrito.push({ producto_id: id, cantidad: 1 });
-  
+
   guardarCarrito();
-  mostrarMensaje('Producto agregado al carrito', 'ok');
+  mostrarMensaje(`¡${p.nombre} añadido!`, 'ok');
 }
 
 function cambiarCantidad(id, cambio) {
@@ -153,23 +252,29 @@ function pintarCarrito() {
 
   carrito.forEach(item => {
     const p = catalogo[item.producto_id];
-    const nombre = p ? p.nombre : 'Producto ' + item.producto_id;
-    const subtotal = p ? p.precio * item.cantidad : 0;
+    if (!p) return; // Por seguridad si se borró un producto
+    const nombre = p.nombre;
+    const subtotal = p.precio * item.cantidad;
     total += subtotal;
     unidades += item.cantidad;
+
     lista.innerHTML += `
       <li>
-        <span>${nombre}<br><small>$${subtotal}</small></span>
-        <span class="cantidad">
+        <div class="item-info">
+            <strong>${nombre}</strong><br>
+            <span class="item-precio">$${p.precio.toLocaleString('es-CL')} / ud.</span>
+        </div>
+        <div class="cantidad">
           <button onclick="cambiarCantidad(${item.producto_id}, -1)">−</button>
-          ${item.cantidad}
+          <strong>${item.cantidad}</strong>
           <button onclick="cambiarCantidad(${item.producto_id}, 1)">+</button>
-        </span>
-      </li>`;
+        </div>
+      </li>
+    `;
   });
 
-  if (carrito.length === 0) lista.innerHTML = '<li>Tu carrito está vacío</li>';
-  if (document.getElementById('carrito-total')) document.getElementById('carrito-total').textContent = '$' + total;
+  if (carrito.length === 0) lista.innerHTML = '<li class="vacio">Tu carrito está vacío</li>';
+  if (document.getElementById('carrito-total')) document.getElementById('carrito-total').textContent = '$' + total.toLocaleString('es-CL');
   if (document.getElementById('contador')) document.getElementById('contador').textContent = unidades;
 }
 
@@ -177,10 +282,6 @@ function alternarCarrito() {
   const c = document.getElementById('carrito');
   if (c) c.classList.toggle('oculto');
 }
-
-// =========================================================
-// 4. USUARIOS Y COMPRA (Plantilla de la Clase 3)
-// =========================================================
 
 function abrirModal() {
   const m = document.getElementById('modal');
@@ -212,77 +313,83 @@ function actualizarSesion() {
   const logueado = Boolean(token);
   const saludo = document.getElementById('saludo');
   const btnSalir = document.getElementById('btn-salir');
-  if (saludo) saludo.textContent = logueado ? usuarioEmail : '';
+  if (saludo) saludo.textContent = logueado ? `Hola, ${usuarioEmail.split('@')[0]}` : '';
   if (btnSalir) btnSalir.classList.toggle('oculto', !logueado);
 }
 
-// TODO (Clase 3): completar estas funciones según la plantilla
 async function registrar(evento) {
+  evento.preventDefault();
   const nombre = document.getElementById('reg-nombre').value;
-const email = document.getElementById('reg-email').value;
-const password = document.getElementById('reg-password').value;
-const res = await fetch('/registro', {
- method: 'POST',
- headers: { 'Content-Type': 'application/json' },
- body: JSON.stringify({ nombre, email, password })
-});
-if (res.status === 201) {
- mostrarMensaje('Cuenta creada. Ahora ingresá con tu email y contraseña.', 'ok');
- mostrarRegistro(false); // pasa al login
- document.getElementById('login-email').value = email;
-} else {
- mostrarMensaje(await res.text(), 'error');
-}
+  const email = document.getElementById('reg-email').value;
+  const password = document.getElementById('reg-password').value;
+
+  const res = await fetch('/registro', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ nombre, email, password })
+  });
+
+  if (res.status === 201) {
+    mostrarMensaje('Cuenta creada. Ingresa con tus credenciales.', 'ok');
+    mostrarRegistro(false);
+    document.getElementById('login-email').value = email;
+  } else {
+    mostrarMensaje(await res.text(), 'error');
+  }
 }
 
 async function iniciarSesion(evento) {
   evento.preventDefault();
   const email = document.getElementById('login-email').value;
-const password = document.getElementById('login-password').value;
-const res = await fetch('/login', {
- method: 'POST',
- headers: { 'Content-Type': 'application/json' },
- body: JSON.stringify({ email, password })
-});
-if (!res.ok) return mostrarMensaje(await res.text(), 'error');
-const datos = await res.json(); // { token: "eyJhb..." }
-token = datos.token;
-usuarioEmail = email;
-localStorage.setItem('token', token);
-localStorage.setItem('email', email);
-cerrarModal();
-actualizarSesion(); // muestra el email y el botón Salir
-mostrarMensaje('¡Hola! Ya podés comprar.', 'ok');
+  const password = document.getElementById('login-password').value;
+
+  const res = await fetch('/login', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password })
+  });
+
+  if (!res.ok) return mostrarMensaje(await res.text(), 'error');
+
+  const datos = await res.json();
+  token = datos.token;
+  usuarioEmail = email;
+  localStorage.setItem('token', token);
+  localStorage.setItem('email', email);
+  cerrarModal();
+  actualizarSesion();
+  mostrarMensaje('¡Hola de nuevo!', 'ok');
 }
 
 async function comprar() {
-  if (!token) { // sin sesión: primero ingresar
- abrirModal();
- return mostrarMensaje('Ingresá para poder comprar', 'error');
-}
-const res = await fetch('/pedidos', {
- method: 'POST',
- headers: {
- 'Content-Type': 'application/json',
- 'Authorization': 'Bearer ' + token // con un espacio después de Bearer
- },
- body: JSON.stringify({ items: carrito })
-});
-if (res.status === 201) {
- const pedido = await res.json();
- carrito = [];
- guardarCarrito();
- alternarCarrito();
- mostrarMensaje('¡Compra realizada! Pedido #' + pedido.id +
- ' por $' + pedido.total, 'ok');
- cargarProductos(categoriaActual); // para ver el stock nuevo
-} else if (res.status === 401) {
- cerrarSesion();
- abrirModal();
- mostrarMensaje('Tu sesión venció. Ingresá de nuevo.', 'error');
-} else {
- mostrarMensaje(await res.text(), 'error');
-}
+  if (!token) {
+    abrirModal();
+    return mostrarMensaje('Ingresa para poder comprar', 'error');
+  }
+
+  const res = await fetch('/pedidos', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + token
+    },
+    body: JSON.stringify({ items: carrito })
+  });
+
+  if (res.status === 201) {
+    const pedido = await res.json();
+    carrito = [];
+    guardarCarrito();
+    alternarCarrito();
+    mostrarMensaje('¡Compra realizada!', 'ok');
+    cargarProductos(categoriaActual); 
+  } else if (res.status === 401) {
+    cerrarSesion();
+    abrirModal();
+    mostrarMensaje('Tu sesión venció.', 'error');
+  } else {
+    mostrarMensaje(await res.text(), 'error');
+  }
 }
 
 function mostrarMensaje(texto, tipo) {
@@ -296,6 +403,6 @@ function mostrarMensaje(texto, tipo) {
 
 // ---------- AL ABRIR LA PÁGINA ----------
 cargarCategorias();
-cargarProductos();
+cargarProductos(); // Carga todas las categorías en modo carrusel
 pintarCarrito();
 actualizarSesion();

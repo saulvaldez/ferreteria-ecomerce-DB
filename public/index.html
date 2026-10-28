@@ -1,84 +1,118 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>🛠️ Ferretería Central</title>
-  <link rel="stylesheet" href="estilos.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ferretería Pro</title>
+    <!-- Agregamos iconos para que se vea más profesional -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="estilos.css">
 </head>
 <body>
 
-  <!-- 🛠️ BARRA SUPERIOR -->
-  <header class="barra">
-    <h1 class="marca">🛠️ Ferretería Central</h1>
-    <div class="sesion">
-      <span id="saludo"></span>
-      <button id="btn-salir" class="btn btn-claro oculto" onclick="cerrarSesion()">Cerrar sesión</button>
-      <button class="btn btn-claro" onclick="abrirModal()">Ingresar</button>
-      <button class="btn btn-carrito" onclick="alternarCarrito()">
-        🛒 Carrito <span id="contador" class="contador">0</span>
-      </button>
+    <!-- 🌐 Barra Superior: Alineada como el bosquejo -->
+    <header class="barra">
+        <h1 class="marca">Ferretería</h1> <!-- Logo/Nombre -->
+
+        <!-- Buscador Centrado y Redondeado -->
+        <div class="buscador-container">
+            <i class="fas fa-search"></i>
+            <input type="text" id="input-buscar" placeholder="Buscador de herramientas, materiales..." oninput="buscar(this.value)">
+        </div>
+
+        <div class="sesion">
+            <!-- Saludo y botones con iconos (tus Log/Icon) -->
+            <span id="saludo"></span>
+            <button id="btn-salir" class="btn btn-icon oculto" title="Salir" onclick="cerrarSesion()">
+                <i class="fas fa-sign-out-alt"></i>
+            </button>
+            <button class="btn btn-icon" title="Ingresar/Registrarse" onclick="abrirModal()">
+                <i class="fas fa-user-circle"></i>
+            </button>
+            <button class="btn btn-carrito" title="Ver Carrito" onclick="alternarCarrito()">
+                <i class="fas fa-shopping-cart"></i>
+                <span id="contador" class="contador">0</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- 💬 Caja de Mensajes Globales -->
+    <div id="mensaje" class="mensaje oculto"></div>
+
+    <!-- 📦 Contenido Principal: Donde se inyectarán las categorías y productos -->
+    <main class="contenido">
+        
+        <!-- Lista rápida de categorías (Clase 3) -->
+        <nav id="categorias" class="categorias-nav"></nav>
+
+        <hr class="separador-fin">
+
+        <!-- 📜 Catálogo de Productos ORGANIZADO COMO EL BOSQUEJO -->
+        <div id="productos-catalogo">
+            <!-- El JS inyectará aquí los carruseles agrupados por categoría -->
+        </div>
+
+    </main>
+
+    <!-- 🛒 Carrito Lateral (Drawer) -->
+    <aside id="carrito" class="carrito oculto">
+        <div class="carrito-cabecera">
+            <h2><i class="fas fa-shopping-cart"></i> Tu Pedido</h2>
+            <button class="btn-cerrar" onclick="alternarCarrito()">×</button>
+        </div>
+        <ul id="carrito-lista" class="carrito-lista">
+            <!-- Items del carrito -->
+        </ul>
+        <div class="carrito-pie">
+            <p><strong>Total:</strong> <span id="carrito-total">$0</span></p>
+            <button class="btn btn-principal compra" onclick="comprar()">
+                Finalizar Compra <i class="fas fa-credit-card"></i>
+            </button>
+        </div>
+    </aside>
+
+    <!-- 🔐 Modal de Autenticación (Login / Registro) -->
+    <div id="modal" class="modal oculto">
+        <div class="modal-caja">
+            <button class="btn-cerrar" onclick="cerrarModal()">×</button>
+            
+            <!-- Formulario Login -->
+            <form id="form-login" onsubmit="iniciarSesion(event)">
+                <h2><i class="fas fa-sign-in-alt"></i> Ingresar</h2>
+                <div class="input-group">
+                    <i class="fas fa-envelope"></i>
+                    <input id="login-email" type="email" placeholder="Tu email" required>
+                </div>
+                <div class="input-group">
+                    <i class="fas fa-lock"></i>
+                    <input id="login-password" type="password" placeholder="Tu contraseña" required>
+                </div>
+                <button class="btn btn-principal" type="submit">Entrar</button>
+                <p class="cambiar">¿No tienes cuenta? <a href="#" onclick="mostrarRegistro(true)">Registrate aquí</a></p>
+            </form>
+
+            <!-- Formulario Registro -->
+            <form id="form-registro" class="oculto" onsubmit="registrar(event)">
+                <h2><i class="fas fa-user-plus"></i> Crear Cuenta</h2>
+                <div class="input-group">
+                    <i class="fas fa-user"></i>
+                    <input id="reg-nombre" type="text" placeholder="Nombre completo" required>
+                </div>
+                <div class="input-group">
+                    <i class="fas fa-envelope"></i>
+                    <input id="reg-email" type="email" placeholder="Email" required>
+                </div>
+                <div class="input-group">
+                    <i class="fas fa-lock"></i>
+                    <input id="reg-password" type="password" placeholder="Contraseña (mínimo 6)" minlength="6" required>
+                </div>
+                <button class="btn btn-principal" type="submit">Registrarme</button>
+                <p class="cambiar">¿Ya tienes cuenta? <a href="#" onclick="mostrarRegistro(false)">Ingresa aquí</a></p>
+            </form>
+        </div>
     </div>
-  </header>
 
-  <!-- 🔔 CAJA DE MENSAJES -->
-  <div id="mensaje" class="mensaje oculto"></div>
-
-  <!-- 🛍️ CONTENIDO PRINCIPAL (CATÁLOGO DIRECTO DE CLASE 3) -->
-  <main class="contenido">
-    <!-- 🔍 Buscador por Nombre -->
-    <div class="buscador">
-      <input type="text" placeholder="Buscar productos por nombre..." oninput="buscar(this.value)">
-    </div>
-
-    <!-- 📂 Categorías -->
-    <h2>Categorías</h2>
-    <nav id="categorias" class="categorias"></nav>
-
-    <!-- 📦 Catálogo de Productos -->
-    <h2>Catálogo de Productos</h2>
-    <div id="productos" class="grilla"></div>
-  </main>
-
-  <!-- 🛒 PANEL DEL CARRITO -->
-  <aside id="carrito" class="carrito oculto">
-    <div class="carrito-cabecera">
-      <h2>Tu Carrito</h2>
-      <button class="btn-cerrar" onclick="alternarCarrito()">×</button>
-    </div>
-    <ul id="carrito-lista" class="carrito-lista"></ul>
-    <div class="carrito-pie">
-      <p>Total: <strong id="carrito-total">$0</strong></p>
-      <button class="btn btn-principal" onclick="comprar()">Confirmar Compra</button>
-    </div>
-  </aside>
-
-  <!-- 🔒 MODAL DE LOGIN / REGISTRO -->
-  <div id="modal" class="modal oculto">
-    <div class="modal-contenido">
-      <button class="btn-cerrar" onclick="cerrarModal()">×</button>
-
-      <!-- Formulario Login -->
-      <form id="form-login" onsubmit="iniciarSesion(event)">
-        <h2>Ingresar</h2>
-        <input id="login-email" type="email" placeholder="Email" required>
-        <input id="login-password" type="password" placeholder="Contraseña" required>
-        <button class="btn btn-principal" type="submit">Ingresar</button>
-        <p class="cambiar">¿No tienes cuenta? <a href="#" onclick="mostrarRegistro(true)">Registrate aquí</a></p>
-      </form>
-
-      <!-- Formulario Registro -->
-      <form id="form-registro" class="oculto" onsubmit="registrar(event)">
-        <h2>Crear cuenta</h2>
-        <input id="reg-nombre" type="text" placeholder="Nombre completo" required>
-        <input id="reg-email" type="email" placeholder="Email" required>
-        <input id="reg-password" type="password" placeholder="Contraseña (mínimo 6)" minlength="6" required>
-        <button class="btn btn-principal" type="submit">Crear cuenta</button>
-        <p class="cambiar">¿Ya tienes cuenta? <a href="#" onclick="mostrarRegistro(false)">Ingresa aquí</a></p>
-      </form>
-    </div>
-  </div>
-
-  <script src="app.js"></script>
+    <!-- 📜 Script principal -->
+    <script src="app.js"></script>
 </body>
 </html>
